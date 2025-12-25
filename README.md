@@ -41,8 +41,8 @@ A Flutter application for saving and reading articles offline with a clean, dist
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/offline_article_reader.git
-   cd offline_article_reader
+   git clone https://github.com/yourusername/readlater.git
+   cd readlater
    ```
 
 2. Install dependencies:

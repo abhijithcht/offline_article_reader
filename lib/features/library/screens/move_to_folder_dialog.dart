@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_article_reader/app_imports.dart';
-import 'package:offline_article_reader/features/library/viewmodels/folders_viewmodel.dart';
-import 'package:offline_article_reader/features/library/viewmodels/library_viewmodel.dart';
+import 'package:readlater/app_imports.dart';
+import 'package:readlater/features/library/viewmodels/folders_viewmodel.dart';
+import 'package:readlater/features/library/viewmodels/library_viewmodel.dart';
 
 class MoveToFolderDialog extends ConsumerWidget {
   const MoveToFolderDialog({

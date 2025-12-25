@@ -1,6 +1,6 @@
-import 'package:offline_article_reader/core/database/database_helper.dart';
-import 'package:offline_article_reader/core/database/tables.dart';
-import 'package:offline_article_reader/features/library/models/folder.dart';
+import 'package:readlater/core/database/database_helper.dart';
+import 'package:readlater/core/database/tables.dart';
+import 'package:readlater/features/library/models/folder.dart';
 import 'package:sqflite/sqflite.dart';
 
 class FolderDao {

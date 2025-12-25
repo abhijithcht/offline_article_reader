@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_article_reader/app_imports.dart';
-import 'package:offline_article_reader/features/library/data/article_dao.dart';
-import 'package:offline_article_reader/features/library/data/folder_dao.dart';
-import 'package:offline_article_reader/features/library/models/folder.dart';
+import 'package:readlater/app_imports.dart';
+import 'package:readlater/features/library/data/article_dao.dart';
+import 'package:readlater/features/library/data/folder_dao.dart';
+import 'package:readlater/features/library/models/folder.dart';
 
 // Provider for ArticleDao
 final articleDaoProvider = Provider<ArticleDao>((ref) {

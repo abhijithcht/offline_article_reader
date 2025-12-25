@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:offline_article_reader/app_imports.dart';
-import 'package:offline_article_reader/features/library/models/folder.dart';
-import 'package:offline_article_reader/features/library/screens/move_to_folder_dialog.dart';
-import 'package:offline_article_reader/features/library/viewmodels/folders_viewmodel.dart';
+import 'package:readlater/app_imports.dart';
+import 'package:readlater/features/library/models/folder.dart';
+import 'package:readlater/features/library/screens/move_to_folder_dialog.dart';
+import 'package:readlater/features/library/viewmodels/folders_viewmodel.dart';
 
 class FolderDetailScreen extends ConsumerWidget {
   const FolderDetailScreen({required this.folder, super.key});

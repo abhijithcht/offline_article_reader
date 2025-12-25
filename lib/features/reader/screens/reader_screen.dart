@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:offline_article_reader/app_imports.dart';
+import 'package:readlater/app_imports.dart';
 
 /// Screen for reading an article's content.
 class ReaderScreen extends ConsumerWidget {

@@ -1,5 +1,5 @@
-import 'package:offline_article_reader/core/database/tables.dart';
 import 'package:path/path.dart';
+import 'package:readlater/core/database/tables.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {

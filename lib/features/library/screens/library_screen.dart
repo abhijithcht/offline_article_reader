@@ -5,10 +5,10 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:offline_article_reader/app_imports.dart';
-import 'package:offline_article_reader/features/library/screens/folder_detail_screen.dart';
-import 'package:offline_article_reader/features/library/screens/move_to_folder_dialog.dart';
-import 'package:offline_article_reader/features/library/viewmodels/folders_viewmodel.dart';
+import 'package:readlater/app_imports.dart';
+import 'package:readlater/features/library/screens/folder_detail_screen.dart';
+import 'package:readlater/features/library/screens/move_to_folder_dialog.dart';
+import 'package:readlater/features/library/viewmodels/folders_viewmodel.dart';
 
 /// Screen that displays the list of saved articles.
 class LibraryScreen extends ConsumerStatefulWidget {

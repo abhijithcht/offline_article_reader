@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_article_reader/app_imports.dart';
-import 'package:offline_article_reader/features/library/models/folder.dart';
+import 'package:readlater/app_imports.dart';
+import 'package:readlater/features/library/models/folder.dart';
 
 class FoldersViewModel extends AsyncNotifier<List<Folder>> {
   @override

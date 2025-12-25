@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_article_reader/features/history/data/history_dao.dart';
-import 'package:offline_article_reader/features/history/models/history_item.dart';
+import 'package:readlater/features/history/data/history_dao.dart';
+import 'package:readlater/features/history/models/history_item.dart';
 
 /// Provider for HistoryDao
 final historyDaoProvider = Provider<HistoryDao>((ref) {

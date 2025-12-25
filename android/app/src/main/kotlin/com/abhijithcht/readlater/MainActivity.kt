@@ -1,4 +1,4 @@
-package com.example.offline_article_reader
+package com.abhijithcht.readlater
 
 import io.flutter.embedding.android.FlutterActivity
 

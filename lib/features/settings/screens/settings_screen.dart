@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_article_reader/app_imports.dart';
+import 'package:readlater/app_imports.dart';
 
 /// Screen for configuring app settings/preferences.
 class SettingsScreen extends ConsumerWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:offline_article_reader/app_imports.dart';
-import 'package:offline_article_reader/main.dart';
+import 'package:readlater/app_imports.dart';
+import 'package:readlater/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Note: We need a ProviderScope for the app to run
 

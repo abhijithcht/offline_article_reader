@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:offline_article_reader/app_imports.dart';
+import 'package:readlater/app_imports.dart';
 import 'package:riverpod/riverpod.dart';
 
 /// ViewModel for the History feature.

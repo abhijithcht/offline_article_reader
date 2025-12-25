@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:offline_article_reader/app_imports.dart';
+import 'package:readlater/app_imports.dart';
 
 class AppTheme {
   // Call this before runApp() to disable network font fetching

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:offline_article_reader/core/constants/app_sizes.dart';
-import 'package:offline_article_reader/core/constants/app_strings.dart';
-import 'package:offline_article_reader/features/onboarding/models/onboarding_page.dart';
-import 'package:offline_article_reader/features/onboarding/viewmodels/onboarding_viewmodel.dart';
-import 'package:offline_article_reader/router/app_routes.dart';
+import 'package:readlater/core/constants/app_sizes.dart';
+import 'package:readlater/core/constants/app_strings.dart';
+import 'package:readlater/features/onboarding/models/onboarding_page.dart';
+import 'package:readlater/features/onboarding/viewmodels/onboarding_viewmodel.dart';
+import 'package:readlater/router/app_routes.dart';
 
 /// Screen displayed to new users to introduce app features.
 class OnboardingScreen extends ConsumerStatefulWidget {

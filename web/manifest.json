@@ -1,6 +1,6 @@
 {
-    "name": "offline_article_reader",
-    "short_name": "offline_article_reader",
+    "name": "readlater",
+    "short_name": "readlater",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
