@@ -40,11 +40,23 @@ class LibraryViewModel extends AsyncNotifier<List<Article>> {
     return text;
   }
 
-  /// Delete an article by ID
-  Future<void> deleteArticle(int id) async {
+  /// Delete an article by ID.
+  /// [url] is required to invalidate the reader cache if the article is open or cached.
+  Future<void> deleteArticle(int id, String url) async {
     final storage = ref.read(storageServiceProvider);
     await storage.deleteArticle(id);
+
+    // Invalidate the specific article provider to ensure ReaderScreen updates its state
+    ref.invalidate(articleContentProvider(url));
+
     // Refresh list
+    await refresh();
+  }
+
+  /// Moves an article to a folder (or removes it if folderId is null)
+  Future<void> moveArticleToFolder(int articleId, int? folderId) async {
+    final storage = ref.read(storageServiceProvider);
+    await storage.moveArticleToFolder(articleId, folderId);
     await refresh();
   }
 }

@@ -15,6 +15,7 @@ export 'features/onboarding/models/onboarding_page.dart';
 export 'features/onboarding/screens/onboarding_screen.dart';
 export 'features/onboarding/services/onboarding_service.dart';
 export 'features/onboarding/viewmodels/onboarding_viewmodel.dart';
+export 'features/reader/providers/reader_providers.dart';
 export 'features/reader/screens/reader_screen.dart';
 export 'features/reader/screens/url_input_screen.dart';
 export 'features/reader/services/article_parser_service.dart';

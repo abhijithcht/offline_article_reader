@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:offline_article_reader/app_imports.dart';
+import 'package:offline_article_reader/features/library/screens/folder_detail_screen.dart';
+import 'package:offline_article_reader/features/library/screens/move_to_folder_dialog.dart';
+import 'package:offline_article_reader/features/library/viewmodels/folders_viewmodel.dart';
 
 /// Screen that displays the list of saved articles.
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -55,83 +58,234 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   Widget build(BuildContext context) {
     // Watch the VM state
     final articlesAsync = ref.watch(libraryViewModelProvider);
+    final foldersAsync = ref.watch(foldersViewModelProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.appName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh',
-            onPressed: () {
-              unawaited(ref.read(libraryViewModelProvider.notifier).refresh());
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'History',
-            onPressed: () => context.push(AppRoutes.historyPath),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-            onPressed: () => context.push(AppRoutes.settingsPath),
-          ),
-        ],
-      ),
-      body: articlesAsync.when(
-        data: (articles) {
-          if (articles.isEmpty) {
-            return _EmptyLibraryView(
-              onAddArticle: () => context.push(AppRoutes.addArticlePath),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(AppSizes.p16),
-            itemCount: articles.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: AppSizes.p12),
-            itemBuilder: (context, index) {
-              final article = articles[index];
-              return _ArticleCard(article: article);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(
-          child: Text('Error loading articles: $err'),
-        ),
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Paste from clipboard FAB
-          FloatingActionButton.small(
-            heroTag: 'paste_fab',
-            onPressed: _isLoading ? null : () => unawaited(_pasteAndOpen()),
-            tooltip: 'Paste URL from clipboard',
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.content_paste_go),
-          ),
-          const SizedBox(height: AppSizes.p12),
-          // Add article FAB
-          FloatingActionButton.extended(
-            heroTag: 'add_fab',
-            onPressed: () async {
-              await context.push(AppRoutes.addArticlePath);
-              if (mounted) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(AppStrings.appName),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh',
+              onPressed: () {
                 unawaited(
                   ref.read(libraryViewModelProvider.notifier).refresh(),
                 );
+                ref.invalidate(foldersViewModelProvider);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.history),
+              tooltip: 'History',
+              onPressed: () => context.push(AppRoutes.historyPath),
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Settings',
+              onPressed: () => context.push(AppRoutes.settingsPath),
+            ),
+          ],
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'All Articles'),
+              Tab(text: 'Folders'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // Tab 1: Articles
+            articlesAsync.when(
+              data: (articles) {
+                if (articles.isEmpty) {
+                  return _EmptyLibraryView(
+                    onAddArticle: () => context.push(AppRoutes.addArticlePath),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(AppSizes.p16),
+                  itemCount: articles.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: AppSizes.p12),
+                  itemBuilder: (context, index) {
+                    final article = articles[index];
+                    return _ArticleCard(article: article);
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(
+                child: Text('Error loading articles: $err'),
+              ),
+            ),
+
+            // Tab 2: Folders
+            foldersAsync.when(
+              data: (folders) {
+                if (folders.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.folder_open,
+                          size: 64,
+                          color: Theme.of(context).disabledColor,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('No folders yet'),
+                      ],
+                    ),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.all(AppSizes.p16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.3,
+                  ),
+                  itemCount: folders.length,
+                  itemBuilder: (context, index) {
+                    final folder = folders[index];
+                    return Card(
+                      elevation: 2,
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context)
+                              .push(
+                                MaterialPageRoute<void>(
+                                  builder: (context) =>
+                                      FolderDetailScreen(folder: folder),
+                                ),
+                              )
+                              .ignore();
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.folder,
+                              size: 40,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                folder.name,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+            ),
+          ],
+        ),
+        floatingActionButton: Builder(
+          // Use builder to get context with DefaultTabController logic if needed,
+          // or just show column of FABs.
+          // Maybe we want contextual FAB based on tab?
+          // Accessing TabController index is tricky without explicit controller.
+          // For simple MV, let's show all or just Add Article + Create Folder?
+          builder: (context) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Paste FAB
+                FloatingActionButton.small(
+                  heroTag: 'paste_fab',
+                  onPressed: _isLoading
+                      ? null
+                      : () => unawaited(_pasteAndOpen()),
+                  tooltip: 'Paste URL',
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.content_paste_go),
+                ),
+                const SizedBox(height: AppSizes.p12),
+                // Create Folder FAB
+                FloatingActionButton.small(
+                  heroTag: 'create_folder_fab',
+                  onPressed: () => _showCreateFolderDialog(context, ref),
+                  tooltip: 'New Folder',
+                  child: const Icon(Icons.create_new_folder),
+                ),
+                const SizedBox(height: AppSizes.p12),
+                // Add Article FAB
+                FloatingActionButton.extended(
+                  heroTag: 'add_fab',
+                  onPressed: () async {
+                    await context.push(AppRoutes.addArticlePath);
+                    if (mounted) {
+                      unawaited(
+                        ref.read(libraryViewModelProvider.notifier).refresh(),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Article'),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCreateFolderDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final controller = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Folder'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Folder Name'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty) {
+                await ref
+                    .read(foldersViewModelProvider.notifier)
+                    .createFolder(controller.text);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
               }
             },
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add Article'),
+            child: const Text('Create'),
           ),
         ],
       ),
@@ -214,7 +368,7 @@ class _ArticleCard extends ConsumerWidget {
           // Refresh library when returning from reader
           final _ = ref.refresh(savedArticlesProvider);
         },
-        onLongPress: () => _showDeleteDialog(context, ref),
+        onLongPress: () => unawaited(_showOptionsDialog(context, ref)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -317,6 +471,19 @@ class _ArticleCard extends ConsumerWidget {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
+                        if (article.folderId != null) ...[
+                          const Spacer(),
+                          const Icon(
+                            Icons.folder_outlined,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'In Folder',
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -328,10 +495,44 @@ class _ArticleCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _showDeleteDialog(BuildContext context, WidgetRef ref) async {
-    final theme = Theme.of(context);
+  Future<void> _showOptionsDialog(BuildContext context, WidgetRef ref) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder_open),
+              title: const Text('Move to Folder'),
+              onTap: () async {
+                Navigator.pop(context); // Close sheet
+                await showDialog<void>(
+                  context: context,
+                  builder: (context) => MoveToFolderDialog(
+                    articleId: article.id!,
+                    currentFolderId: article.folderId,
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.pop(context); // Close sheet
+                await _confirmDelete(context, ref);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    await showDialog<void>(
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final theme = Theme.of(context);
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Icon(
@@ -345,16 +546,11 @@ class _ArticleCard extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () async {
-              await ref
-                  .read(libraryViewModelProvider.notifier)
-                  .deleteArticle(article.id!);
-              if (context.mounted) Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.error,
             ),
@@ -363,5 +559,11 @@ class _ArticleCard extends ConsumerWidget {
         ],
       ),
     );
+
+    if (confirm ?? false) {
+      await ref
+          .read(libraryViewModelProvider.notifier)
+          .deleteArticle(article.id!, article.url);
+    }
   }
 }

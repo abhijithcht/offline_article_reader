@@ -28,12 +28,10 @@ class SettingsViewModel extends AsyncNotifier<void> {
       // Based on previous code: await storage.clearAllArticles();
 
       // Refresh relevant providers
-      ref.invalidate(savedArticlesProvider);
-
-      // If we want to be thorough, we strictly follow what was there: just articles.
-      // But often users expect history to go too.
-      // Let's stick to the previous behavior for safety, or improved behavior?
-      // I'll stick to previous behavior: clearAllArticles only.
+      ref
+        ..invalidate(savedArticlesProvider)
+        // Invalidate all reader caches
+        ..invalidate(articleContentProvider);
     });
   }
 }

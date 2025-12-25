@@ -84,7 +84,10 @@ class FakeLibraryViewModel extends AsyncNotifier<List<Article>>
   Future<void> refresh() async {}
 
   @override
-  Future<void> deleteArticle(int id) async {}
+  Future<void> deleteArticle(int id, String url) async {}
+
+  @override
+  Future<void> moveArticleToFolder(int articleId, int? folderId) async {}
 }
 
 class FakeUrlInputViewModel extends AsyncNotifier<void>
