@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:offline_article_reader/app_imports.dart';
@@ -22,25 +21,22 @@ class _UrlInputScreenState extends ConsumerState<UrlInputScreen> {
   }
 
   Future<void> _pasteFromClipboard() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    if (data?.text != null) {
-      _urlController.text = data!.text!;
+    final text = await ref
+        .read(urlInputViewModelProvider.notifier)
+        .getClipboardText();
+    if (text != null) {
+      _urlController.text = text;
     }
   }
 
   Future<void> _processArticle() async {
     final url = _urlController.text.trim();
-    if (url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a URL')),
-      );
-      return;
-    }
+    final viewModel = ref.read(urlInputViewModelProvider.notifier);
 
-    // Basic URL validation
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    final error = viewModel.validateUrl(url);
+    if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid URL')),
+        SnackBar(content: Text(error)),
       );
       return;
     }

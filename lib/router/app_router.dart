@@ -45,6 +45,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: AppRoutes.settingsName,
             builder: (context, state) => const SettingsScreen(),
           ),
+          GoRoute(
+            path: AppRoutes.historyRelative,
+            name: AppRoutes.historyName,
+            builder: (context, state) => const HistoryScreen(),
+          ),
         ],
       ),
     ],

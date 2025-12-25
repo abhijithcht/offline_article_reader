@@ -5,9 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:offline_article_reader/core/constants/app_sizes.dart';
 import 'package:offline_article_reader/core/constants/app_strings.dart';
 import 'package:offline_article_reader/features/onboarding/models/onboarding_page.dart';
-import 'package:offline_article_reader/features/onboarding/services/onboarding_service.dart';
+import 'package:offline_article_reader/features/onboarding/viewmodels/onboarding_viewmodel.dart';
 import 'package:offline_article_reader/router/app_routes.dart';
 
+/// Screen displayed to new users to introduce app features.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -49,7 +50,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _completeOnboarding() async {
-    await ref.read(onboardingServiceProvider).completeOnboarding();
+    // Fix inference issue by casting or explicit type
+    await ref.read(onboardingViewModelProvider.notifier).completeOnboarding();
     if (mounted) {
       context.go(AppRoutes.homePath);
     }

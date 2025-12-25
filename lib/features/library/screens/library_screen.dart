@@ -1,16 +1,60 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:offline_article_reader/app_imports.dart';
 
-class LibraryScreen extends ConsumerWidget {
+/// Screen that displays the list of saved articles.
+class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final articlesAsync = ref.watch(savedArticlesProvider);
-    final theme = Theme.of(context);
+  ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends ConsumerState<LibraryScreen> {
+  bool _isLoading = false;
+
+  Future<void> _pasteAndOpen() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final viewModel = ref.read(libraryViewModelProvider.notifier);
+      final url = await viewModel.getUrlFromClipboard();
+
+      // Navigate to reader with clipboard URL
+      if (mounted) {
+        await context.pushNamed(
+          AppRoutes.readerName,
+          queryParameters: {'url': url},
+        );
+        // Refresh library when returning
+        await viewModel.refresh();
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        // Strip "Exception: " prefix for cleaner message if possible
+        final message = e.toString().replaceAll('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch the VM state
+    final articlesAsync = ref.watch(libraryViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,8 +64,13 @@ class LibraryScreen extends ConsumerWidget {
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh',
             onPressed: () {
-              final _ = ref.refresh(savedArticlesProvider);
+              unawaited(ref.read(libraryViewModelProvider.notifier).refresh());
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'History',
+            onPressed: () => context.push(AppRoutes.historyPath),
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -49,39 +98,42 @@ class LibraryScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: AppSizes.p16),
-              Text(
-                'Failed to load articles',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: AppSizes.p8),
-              Text(
-                err.toString(),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+        error: (err, _) => Center(
+          child: Text('Error loading articles: $err'),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await context.push(AppRoutes.addArticlePath);
-          final _ = ref.refresh(savedArticlesProvider);
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Article'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Paste from clipboard FAB
+          FloatingActionButton.small(
+            heroTag: 'paste_fab',
+            onPressed: _isLoading ? null : () => unawaited(_pasteAndOpen()),
+            tooltip: 'Paste URL from clipboard',
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.content_paste_go),
+          ),
+          const SizedBox(height: AppSizes.p12),
+          // Add article FAB
+          FloatingActionButton.extended(
+            heroTag: 'add_fab',
+            onPressed: () async {
+              await context.push(AppRoutes.addArticlePath);
+              if (mounted) {
+                unawaited(
+                  ref.read(libraryViewModelProvider.notifier).refresh(),
+                );
+              }
+            },
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Article'),
+          ),
+        ],
       ),
     );
   }
@@ -298,8 +350,9 @@ class _ArticleCard extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () async {
-              await ref.read(storageServiceProvider).deleteArticle(article.id!);
-              final _ = ref.refresh(savedArticlesProvider);
+              await ref
+                  .read(libraryViewModelProvider.notifier)
+                  .deleteArticle(article.id!);
               if (context.mounted) Navigator.pop(context);
             },
             style: FilledButton.styleFrom(

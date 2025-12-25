@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:offline_article_reader/app_imports.dart';
 
+/// Screen for configuring app settings/preferences.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -113,7 +114,9 @@ class SettingsScreen extends ConsumerWidget {
                     )
                   : null,
               onTap: () async {
-                await ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                await ref
+                    .read(settingsViewModelProvider.notifier)
+                    .setThemeMode(mode);
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
                 }
@@ -156,9 +159,7 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     if ((confirmed ?? false) && context.mounted) {
-      final storage = ref.read(storageServiceProvider);
-      await storage.clearAllArticles();
-      ref.invalidate(savedArticlesProvider);
+      await ref.read(settingsViewModelProvider.notifier).clearAllData();
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

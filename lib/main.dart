@@ -47,6 +47,7 @@ class _AppInitializerState extends ConsumerState<_AppInitializer> {
   }
 }
 
+/// The root widget of the application.
 class OfflineArticleReaderApp extends ConsumerWidget {
   const OfflineArticleReaderApp({super.key});
 

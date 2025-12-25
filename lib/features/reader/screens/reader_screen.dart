@@ -27,6 +27,17 @@ final FutureProviderFamily<ArticleContent, String> articleContentProvider =
       final cachedArticle = await storage.getArticleByUrl(url);
 
       if (cachedArticle != null && cachedArticle.content != null) {
+        // Add to history
+        final history = ref.read(historyServiceProvider);
+        await history.addToHistory(
+          HistoryItem(
+            url: url,
+            title: cachedArticle.title,
+            imageUrl: cachedArticle.imageUrl,
+            viewedAt: DateTime.now(),
+          ),
+        );
+
         // Return cached content (offline-first)
         return ArticleContent(
           title: cachedArticle.title,
@@ -40,6 +51,17 @@ final FutureProviderFamily<ArticleContent, String> articleContentProvider =
       final parser = ref.read(articleParserServiceProvider);
       final parsed = await parser.parseArticle(url);
 
+      // Add to history
+      final history = ref.read(historyServiceProvider);
+      await history.addToHistory(
+        HistoryItem(
+          url: url,
+          title: parsed.title,
+          imageUrl: parsed.imageUrl,
+          viewedAt: DateTime.now(),
+        ),
+      );
+
       return ArticleContent(
         title: parsed.title,
         content: parsed.content,
@@ -47,6 +69,7 @@ final FutureProviderFamily<ArticleContent, String> articleContentProvider =
       );
     });
 
+/// Screen for reading an article's content.
 class ReaderScreen extends ConsumerWidget {
   const ReaderScreen({required this.url, super.key});
   final String url;
@@ -338,34 +361,46 @@ class ReaderScreen extends ConsumerWidget {
     WidgetRef ref,
     ArticleContent article,
   ) async {
-    final articleToSave = Article(
-      url: url,
-      title: article.title,
-      content: article.content,
-      imageUrl: article.imageUrl,
-      savedAt: DateTime.now(),
-    );
+    final theme = Theme.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    final storage = ref.read(storageServiceProvider);
-    await storage.saveArticle(articleToSave);
+    try {
+      await ref
+          .read(readerViewModelProvider.notifier)
+          .saveArticle(
+            url: url,
+            title: article.title,
+            content: article.content,
+            imageUrl: article.imageUrl,
+          );
 
-    // Refresh both providers to update UI
-    ref
-      ..invalidate(articleContentProvider(url))
-      ..invalidate(savedArticlesProvider);
+      // We should probably check for errors in the state,
+      // but if saveArticle throws, we catch it here.
+      // Or we can watch the state for error/loading.
+      // For now, simpler await approach as requested.
 
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: AppColors.success),
-              SizedBox(width: AppSizes.p12),
-              Text('Article saved to library'),
-            ],
+      if (scaffoldMessenger.mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.success),
+                SizedBox(width: AppSizes.p12),
+                Text('Article saved to library'),
+              ],
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } on Exception catch (e) {
+      if (scaffoldMessenger.mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: theme.colorScheme.error,
+          ),
+        );
+      }
     }
   }
 }
