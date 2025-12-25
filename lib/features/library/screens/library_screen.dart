@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -18,12 +19,12 @@ class LibraryScreen extends ConsumerStatefulWidget {
 }
 
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
-  bool _isLoading = false;
+  final _fabKey = GlobalKey<ExpandableFabState>();
 
   Future<void> _pasteAndOpen() async {
-    setState(() {
-      _isLoading = true;
-    });
+    // Close the FAB menu
+    _fabKey.currentState?.toggle();
+
     try {
       final viewModel = ref.read(libraryViewModelProvider.notifier);
       final url = await viewModel.getUrlFromClipboard();
@@ -41,17 +42,60 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       if (mounted) {
         // Strip "Exception: " prefix for cleaner message if possible
         final message = e.toString().replaceAll('Exception: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
+  }
+
+  Future<void> _addArticle() async {
+    // Close the FAB menu
+    _fabKey.currentState?.toggle();
+
+    await context.push(AppRoutes.addArticlePath);
+    if (mounted) {
+      unawaited(ref.read(libraryViewModelProvider.notifier).refresh());
+    }
+  }
+
+  void _showCreateFolderDialog() {
+    // Close the FAB menu
+    _fabKey.currentState?.toggle();
+
+    final controller = TextEditingController();
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('New Folder'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Folder Name'),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (controller.text.isNotEmpty) {
+                  await ref
+                      .read(foldersViewModelProvider.notifier)
+                      .createFolder(controller.text);
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                  }
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -59,6 +103,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     // Watch the VM state
     final articlesAsync = ref.watch(libraryViewModelProvider);
     final foldersAsync = ref.watch(foldersViewModelProvider);
+    final theme = Theme.of(context);
 
     return DefaultTabController(
       length: 2,
@@ -116,9 +161,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(
-                child: Text('Error loading articles: $err'),
-              ),
+              error: (err, _) =>
+                  Center(child: Text('Error loading articles: $err')),
             ),
 
             // Tab 2: Folders
@@ -198,96 +242,95 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
           ],
         ),
-        floatingActionButton: Builder(
-          // Use builder to get context with DefaultTabController logic if needed,
-          // or just show column of FABs.
-          // Maybe we want contextual FAB based on tab?
-          // Accessing TabController index is tricky without explicit controller.
-          // For simple MV, let's show all or just Add Article + Create Folder?
-          builder: (context) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
+        // Expandable FAB using flutter_expandable_fab package
+        floatingActionButtonLocation: ExpandableFab.location,
+        floatingActionButton: ExpandableFab(
+          key: _fabKey,
+          type: ExpandableFabType.up,
+          distance: 70,
+          childrenAnimation: ExpandableFabAnimation.none,
+          overlayStyle: ExpandableFabOverlayStyle(
+            color: theme.colorScheme.scrim.withAlpha(100),
+          ),
+          openButtonBuilder: RotateFloatingActionButtonBuilder(
+            child: const Icon(Icons.add_rounded, size: 24),
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            backgroundColor: theme.colorScheme.primaryContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          closeButtonBuilder: RotateFloatingActionButtonBuilder(
+            child: const Icon(Icons.close_rounded, size: 24),
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            backgroundColor: theme.colorScheme.primaryContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          children: [
+            // Add Article
+            Row(
               children: [
-                // Paste FAB
-                FloatingActionButton.small(
-                  heroTag: 'paste_fab',
-                  onPressed: _isLoading
-                      ? null
-                      : () => unawaited(_pasteAndOpen()),
-                  tooltip: 'Paste URL',
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.content_paste_go),
+                Text(
+                  'Add Article',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                const SizedBox(height: AppSizes.p12),
-                // Create Folder FAB
+                const SizedBox(width: 16),
                 FloatingActionButton.small(
-                  heroTag: 'create_folder_fab',
-                  onPressed: () => _showCreateFolderDialog(context, ref),
-                  tooltip: 'New Folder',
-                  child: const Icon(Icons.create_new_folder),
-                ),
-                const SizedBox(height: AppSizes.p12),
-                // Add Article FAB
-                FloatingActionButton.extended(
-                  heroTag: 'add_fab',
-                  onPressed: () async {
-                    await context.push(AppRoutes.addArticlePath);
-                    if (mounted) {
-                      unawaited(
-                        ref.read(libraryViewModelProvider.notifier).refresh(),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Article'),
+                  heroTag: 'add_article_fab',
+                  onPressed: _addArticle,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  child: const Icon(Icons.article_outlined),
                 ),
               ],
-            );
-          },
+            ),
+            // Paste URL
+            Row(
+              children: [
+                Text(
+                  'Paste URL',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                FloatingActionButton.small(
+                  heroTag: 'paste_url_fab',
+                  onPressed: _pasteAndOpen,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  child: const Icon(Icons.content_paste_go_rounded),
+                ),
+              ],
+            ),
+            // New Folder
+            Row(
+              children: [
+                Text(
+                  'New Folder',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                FloatingActionButton.small(
+                  heroTag: 'new_folder_fab',
+                  onPressed: _showCreateFolderDialog,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  child: const Icon(Icons.create_new_folder_rounded),
+                ),
+              ],
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Future<void> _showCreateFolderDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final controller = TextEditingController();
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New Folder'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Folder Name'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                await ref
-                    .read(foldersViewModelProvider.notifier)
-                    .createFolder(controller.text);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
       ),
     );
   }
@@ -366,7 +409,7 @@ class _ArticleCard extends ConsumerWidget {
             queryParameters: {'url': article.url},
           );
           // Refresh library when returning from reader
-          final _ = ref.refresh(savedArticlesProvider);
+          final _ = ref.refresh(libraryViewModelProvider);
         },
         onLongPress: () => unawaited(_showOptionsDialog(context, ref)),
         child: Column(
@@ -473,15 +516,18 @@ class _ArticleCard extends ConsumerWidget {
                         ),
                         if (article.folderId != null) ...[
                           const Spacer(),
-                          const Icon(
+                          Icon(
                             Icons.folder_outlined,
                             size: 14,
-                            color: Colors.grey,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
-                          const Text(
+                          Text(
                             'In Folder',
-                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ],
@@ -496,6 +542,7 @@ class _ArticleCard extends ConsumerWidget {
   }
 
   Future<void> _showOptionsDialog(BuildContext context, WidgetRef ref) async {
+    final theme = Theme.of(context);
     await showModalBottomSheet<void>(
       context: context,
       builder: (context) => SafeArea(
@@ -517,8 +564,14 @@ class _ArticleCard extends ConsumerWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              leading: Icon(
+                Icons.delete_outline,
+                color: theme.colorScheme.error,
+              ),
+              title: Text(
+                'Delete',
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
               onTap: () async {
                 Navigator.pop(context); // Close sheet
                 await _confirmDelete(context, ref);
@@ -541,9 +594,7 @@ class _ArticleCard extends ConsumerWidget {
           size: 32,
         ),
         title: const Text(AppStrings.deleteArticle),
-        content: Text(
-          'Are you sure you want to delete "${article.title}"?',
-        ),
+        content: Text('Are you sure you want to delete "${article.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

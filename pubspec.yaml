@@ -15,6 +15,7 @@ dependencies:
   google_fonts: ^6.3.3
   flutter_animate: ^4.5.2
   flutter_widget_from_html: ^0.17.1
+  flutter_expandable_fab: ^2.5.2
 
   # Architecture & State Management
   flutter_riverpod: ^3.0.3
@@ -33,6 +34,7 @@ dependencies:
   intl: ^0.20.2
 
   riverpod: any
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -40,10 +42,9 @@ dev_dependencies:
   # Linter
   very_good_analysis: ^10.0.0
   
-  # Code Generation (Disabled/Removed for now)
-  # build_runner: ^2.4.9
-
-
-
+  # Code Generation
+  riverpod_generator: ^3.0.3
+  build_runner: ^2.4.14
+  
 flutter:
   uses-material-design: true

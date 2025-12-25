@@ -158,11 +158,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: AppColors.success),
-                SizedBox(width: AppSizes.p12),
-                Expanded(child: Text('Article saved to library')),
+                Icon(
+                  Icons.check_circle,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: AppSizes.p12),
+                const Expanded(child: Text('Article saved to library')),
               ],
             ),
             action: SnackBarAction(
@@ -258,7 +261,7 @@ class _HistoryListTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSizes.p16),
         color: theme.colorScheme.error,
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: Icon(Icons.delete, color: theme.colorScheme.onError),
       ),
       onDismissed: (_) => onDelete(),
       child: ListTile(

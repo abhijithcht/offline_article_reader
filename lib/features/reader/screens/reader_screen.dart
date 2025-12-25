@@ -12,7 +12,6 @@ class ReaderScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final articleAsync = ref.watch(articleContentProvider(url));
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: articleAsync.when(
@@ -119,13 +118,20 @@ class ReaderScreen extends ConsumerWidget {
                           textStyle: theme.textTheme.bodyLarge?.copyWith(
                             height: 1.8,
                             fontSize: 17,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: theme.colorScheme.onSurface,
                           ),
                           customStylesBuilder: (element) {
-                            final textColor = isDark ? '#F9FAFB' : '#111827';
-                            final linkColor = isDark ? '#818CF8' : '#6366F1';
+                            // Helper to convert Color to CSS hex string
+                            // Using toARGB32() instead of deprecated .value
+                            String toHex(Color color) {
+                              final argb = color.toARGB32();
+                              return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
+                            }
+
+                            final textColor = toHex(
+                              theme.colorScheme.onSurface,
+                            );
+                            final linkColor = toHex(theme.colorScheme.primary);
 
                             // Force consistent colors on all container elements
                             if (element.localName == 'div' ||
@@ -318,12 +324,12 @@ class ReaderScreen extends ConsumerWidget {
 
       if (scaffoldMessenger.mounted) {
         scaffoldMessenger.showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: AppColors.success),
-                SizedBox(width: AppSizes.p12),
-                Text('Article saved to library'),
+                Icon(Icons.check_circle, color: theme.colorScheme.primary),
+                const SizedBox(width: AppSizes.p12),
+                const Text('Article saved to library'),
               ],
             ),
           ),

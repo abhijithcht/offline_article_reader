@@ -129,6 +129,7 @@ class FolderDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteFolder(BuildContext context, WidgetRef ref) async {
+    final theme = Theme.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -143,7 +144,10 @@ class FolderDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
           ),
         ],
       ),

@@ -148,12 +148,12 @@ class _UrlInputScreenState extends ConsumerState<UrlInputScreen> {
                 FilledButton(
                   onPressed: _isLoading ? null : () async => _processArticle(),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         )
                       : const Text('Load Article'),
