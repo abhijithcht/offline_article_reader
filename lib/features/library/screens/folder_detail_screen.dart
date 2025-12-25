@@ -44,38 +44,41 @@ class FolderDetailScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            itemCount: folderArticles.length,
-            itemBuilder: (context, index) {
-              final article = folderArticles[index];
-              return ListTile(
-                title: Text(article.title),
-                subtitle: Text(
-                  article.publishedAt != null
-                      ? article.publishedAt.toString()
-                      : 'No date',
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.folder_open),
-                  onPressed: () async {
-                    await showDialog<void>(
-                      context: context,
-                      builder: (ctx) => MoveToFolderDialog(
-                        articleId: article.id!,
-                        currentFolderId: folder.id,
-                      ),
+          return SafeArea(
+            top: false,
+            child: ListView.builder(
+              itemCount: folderArticles.length,
+              itemBuilder: (context, index) {
+                final article = folderArticles[index];
+                return ListTile(
+                  title: Text(article.title),
+                  subtitle: Text(
+                    article.publishedAt != null
+                        ? article.publishedAt.toString()
+                        : 'No date',
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.folder_open),
+                    onPressed: () async {
+                      await showDialog<void>(
+                        context: context,
+                        builder: (ctx) => MoveToFolderDialog(
+                          articleId: article.id!,
+                          currentFolderId: folder.id,
+                        ),
+                      );
+                    },
+                  ),
+                  onTap: () async {
+                    // Navigate to reader
+                    await context.pushNamed(
+                      AppRoutes.readerName,
+                      queryParameters: {'url': article.url},
                     );
                   },
-                ),
-                onTap: () async {
-                  // Navigate to reader
-                  await context.pushNamed(
-                    AppRoutes.readerName,
-                    queryParameters: {'url': article.url},
-                  );
-                },
-              );
-            },
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

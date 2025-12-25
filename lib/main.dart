@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:offline_article_reader/app_imports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,16 @@ Future<void> main() async {
 
   // Disable Google Fonts network fetching for offline support
   AppTheme.init();
+
+  // Enable edge-to-edge on Android 10+
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ),
+  );
 
   // Initialize SharedPreferences before app starts
   final prefs = await SharedPreferences.getInstance();

@@ -15,65 +15,68 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: ListView(
-        children: [
-          // Theme Section
-          const _SectionHeader(title: 'Appearance'),
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          children: [
+            // Theme Section
+            const _SectionHeader(title: 'Appearance'),
 
-          _SettingsTile(
-            icon: Icons.palette_outlined,
-            title: 'Theme',
-            subtitle: getThemeModeLabel(currentTheme),
-            onTap: () => _showThemeDialog(context, ref, currentTheme),
-          ),
-
-          const Divider(),
-
-          // About Section
-          const _SectionHeader(title: 'About'),
-
-          _SettingsTile(
-            icon: Icons.info_outline,
-            title: 'About ${AppStrings.appName}',
-            subtitle: 'Version info, licenses',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => const AboutAppScreen()),
+            _SettingsTile(
+              icon: Icons.palette_outlined,
+              title: 'Theme',
+              subtitle: getThemeModeLabel(currentTheme),
+              onTap: () => _showThemeDialog(context, ref, currentTheme),
             ),
-          ),
 
-          _SettingsTile(
-            icon: Icons.description_outlined,
-            title: 'Open Source Licenses',
-            subtitle: 'Third-party software',
-            onTap: () => showLicensePage(
-              context: context,
-              applicationName: AppStrings.appName,
-              applicationVersion: '1.0.0',
-              applicationIcon: Padding(
-                padding: const EdgeInsets.all(AppSizes.p16),
-                child: Icon(
-                  Icons.auto_stories,
-                  size: 48,
-                  color: theme.colorScheme.primary,
+            const Divider(),
+
+            // About Section
+            const _SectionHeader(title: 'About'),
+
+            _SettingsTile(
+              icon: Icons.info_outline,
+              title: 'About ${AppStrings.appName}',
+              subtitle: 'Version info, licenses',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const AboutAppScreen()),
+              ),
+            ),
+
+            _SettingsTile(
+              icon: Icons.description_outlined,
+              title: 'Open Source Licenses',
+              subtitle: 'Third-party software',
+              onTap: () => showLicensePage(
+                context: context,
+                applicationName: AppStrings.appName,
+                applicationVersion: '1.0.0',
+                applicationIcon: Padding(
+                  padding: const EdgeInsets.all(AppSizes.p16),
+                  child: Icon(
+                    Icons.auto_stories,
+                    size: 48,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const Divider(),
+            const Divider(),
 
-          // Data Section
-          const _SectionHeader(title: 'Data'),
+            // Data Section
+            const _SectionHeader(title: 'Data'),
 
-          _SettingsTile(
-            icon: Icons.delete_outline,
-            title: 'Clear All Articles',
-            subtitle: 'Delete all saved articles',
-            onTap: () => _showClearDataDialog(context, ref),
-            isDestructive: true,
-          ),
-        ],
+            _SettingsTile(
+              icon: Icons.delete_outline,
+              title: 'Clear All Articles',
+              subtitle: 'Delete all saved articles',
+              onTap: () => _showClearDataDialog(context, ref),
+              isDestructive: true,
+            ),
+          ],
+        ),
       ),
     );
   }

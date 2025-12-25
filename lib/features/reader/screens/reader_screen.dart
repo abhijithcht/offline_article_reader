@@ -89,143 +89,146 @@ class ReaderScreen extends ConsumerWidget {
               ),
 
               // Article content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.p20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        article.title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
+              SliverSafeArea(
+                top: false,
+                sliver: SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.p20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          article.title,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: AppSizes.p16),
+                        const SizedBox(height: AppSizes.p16),
 
-                      // Divider
-                      Divider(color: theme.colorScheme.outline),
+                        // Divider
+                        Divider(color: theme.colorScheme.outline),
 
-                      const SizedBox(height: AppSizes.p16),
+                        const SizedBox(height: AppSizes.p16),
 
-                      // Article body
-                      HtmlWidget(
-                        article.content,
-                        textStyle: theme.textTheme.bodyLarge?.copyWith(
-                          height: 1.8,
-                          fontSize: 17,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
+                        // Article body
+                        HtmlWidget(
+                          article.content,
+                          textStyle: theme.textTheme.bodyLarge?.copyWith(
+                            height: 1.8,
+                            fontSize: 17,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
+                          customStylesBuilder: (element) {
+                            final textColor = isDark ? '#F9FAFB' : '#111827';
+                            final linkColor = isDark ? '#818CF8' : '#6366F1';
+
+                            // Force consistent colors on all container elements
+                            if (element.localName == 'div' ||
+                                element.localName == 'section' ||
+                                element.localName == 'article' ||
+                                element.localName == 'span' ||
+                                element.localName == 'figure' ||
+                                element.localName == 'figcaption') {
+                              return {
+                                'background-color': 'transparent',
+                                'color': textColor,
+                              };
+                            }
+
+                            // Style paragraphs
+                            if (element.localName == 'p') {
+                              return {
+                                'margin-bottom': '16px',
+                                'color': textColor,
+                                'background-color': 'transparent',
+                              };
+                            }
+
+                            // Style links
+                            if (element.localName == 'a') {
+                              return {
+                                'color': linkColor,
+                                'text-decoration': 'none',
+                              };
+                            }
+
+                            // Style images
+                            if (element.localName == 'img') {
+                              return {
+                                'border-radius': '12px',
+                                'margin': '16px 0',
+                              };
+                            }
+
+                            // Style headings
+                            if (element.localName == 'h1' ||
+                                element.localName == 'h2' ||
+                                element.localName == 'h3' ||
+                                element.localName == 'h4' ||
+                                element.localName == 'h5' ||
+                                element.localName == 'h6') {
+                              return {
+                                'font-weight': 'bold',
+                                'margin-top': '24px',
+                                'margin-bottom': '12px',
+                                'color': textColor,
+                              };
+                            }
+
+                            // Style blockquotes
+                            if (element.localName == 'blockquote') {
+                              return {
+                                'border-left': '4px solid $linkColor',
+                                'padding-left': '16px',
+                                'margin': '16px 0',
+                                'font-style': 'italic',
+                                'color': textColor,
+                              };
+                            }
+
+                            // Style lists
+                            if (element.localName == 'ul' ||
+                                element.localName == 'ol' ||
+                                element.localName == 'li') {
+                              return {
+                                'color': textColor,
+                              };
+                            }
+
+                            // Style strong/bold
+                            if (element.localName == 'strong' ||
+                                element.localName == 'b') {
+                              return {
+                                'font-weight': 'bold',
+                                'color': textColor,
+                              };
+                            }
+
+                            // Style italic
+                            if (element.localName == 'em' ||
+                                element.localName == 'i') {
+                              return {
+                                'font-style': 'italic',
+                                'color': textColor,
+                              };
+                            }
+
+                            return null;
+                          },
+                          onTapUrl: (tappedUrl) async {
+                            return true;
+                          },
                         ),
-                        customStylesBuilder: (element) {
-                          final textColor = isDark ? '#F9FAFB' : '#111827';
-                          final linkColor = isDark ? '#818CF8' : '#6366F1';
 
-                          // Force consistent colors on all container elements
-                          if (element.localName == 'div' ||
-                              element.localName == 'section' ||
-                              element.localName == 'article' ||
-                              element.localName == 'span' ||
-                              element.localName == 'figure' ||
-                              element.localName == 'figcaption') {
-                            return {
-                              'background-color': 'transparent',
-                              'color': textColor,
-                            };
-                          }
-
-                          // Style paragraphs
-                          if (element.localName == 'p') {
-                            return {
-                              'margin-bottom': '16px',
-                              'color': textColor,
-                              'background-color': 'transparent',
-                            };
-                          }
-
-                          // Style links
-                          if (element.localName == 'a') {
-                            return {
-                              'color': linkColor,
-                              'text-decoration': 'none',
-                            };
-                          }
-
-                          // Style images
-                          if (element.localName == 'img') {
-                            return {
-                              'border-radius': '12px',
-                              'margin': '16px 0',
-                            };
-                          }
-
-                          // Style headings
-                          if (element.localName == 'h1' ||
-                              element.localName == 'h2' ||
-                              element.localName == 'h3' ||
-                              element.localName == 'h4' ||
-                              element.localName == 'h5' ||
-                              element.localName == 'h6') {
-                            return {
-                              'font-weight': 'bold',
-                              'margin-top': '24px',
-                              'margin-bottom': '12px',
-                              'color': textColor,
-                            };
-                          }
-
-                          // Style blockquotes
-                          if (element.localName == 'blockquote') {
-                            return {
-                              'border-left': '4px solid $linkColor',
-                              'padding-left': '16px',
-                              'margin': '16px 0',
-                              'font-style': 'italic',
-                              'color': textColor,
-                            };
-                          }
-
-                          // Style lists
-                          if (element.localName == 'ul' ||
-                              element.localName == 'ol' ||
-                              element.localName == 'li') {
-                            return {
-                              'color': textColor,
-                            };
-                          }
-
-                          // Style strong/bold
-                          if (element.localName == 'strong' ||
-                              element.localName == 'b') {
-                            return {
-                              'font-weight': 'bold',
-                              'color': textColor,
-                            };
-                          }
-
-                          // Style italic
-                          if (element.localName == 'em' ||
-                              element.localName == 'i') {
-                            return {
-                              'font-style': 'italic',
-                              'color': textColor,
-                            };
-                          }
-
-                          return null;
-                        },
-                        onTapUrl: (tappedUrl) async {
-                          return true;
-                        },
-                      ),
-
-                      // Bottom padding for comfortable scrolling
-                      const SizedBox(height: AppSizes.p48),
-                    ],
+                        // Bottom padding for comfortable scrolling
+                        const SizedBox(height: AppSizes.p48),
+                      ],
+                    ),
                   ),
                 ),
               ),
