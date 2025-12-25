@@ -4,11 +4,47 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:offline_article_reader/app_imports.dart';
 
-// Explicit type removed to avoid internal import errors. Inference handled by usage casts.
-final FutureProviderFamily<ParsedArticle, String> articleFutureProvider =
-    FutureProvider.family<ParsedArticle, String>((ref, url) async {
+/// Represents article content for display (from cache or freshly parsed)
+class ArticleContent {
+  ArticleContent({
+    required this.title,
+    required this.content,
+    this.imageUrl,
+    this.isCached = false,
+  });
+
+  final String title;
+  final String content;
+  final String? imageUrl;
+  final bool isCached;
+}
+
+/// Provider that checks cache first, then fetches from URL if needed
+final FutureProviderFamily<ArticleContent, String> articleContentProvider =
+    FutureProvider.family<ArticleContent, String>((ref, url) async {
+      // First, check if article is cached in database
+      final storage = ref.read(storageServiceProvider);
+      final cachedArticle = await storage.getArticleByUrl(url);
+
+      if (cachedArticle != null && cachedArticle.content != null) {
+        // Return cached content (offline-first)
+        return ArticleContent(
+          title: cachedArticle.title,
+          content: cachedArticle.content!,
+          imageUrl: cachedArticle.imageUrl,
+          isCached: true,
+        );
+      }
+
+      // Not cached - fetch from URL
       final parser = ref.read(articleParserServiceProvider);
-      return parser.parseArticle(url);
+      final parsed = await parser.parseArticle(url);
+
+      return ArticleContent(
+        title: parsed.title,
+        content: parsed.content,
+        imageUrl: parsed.imageUrl,
+      );
     });
 
 class ReaderScreen extends ConsumerWidget {
@@ -17,92 +53,319 @@ class ReaderScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Explicitly casting the watch result to fix dynamic inference
-    final articleAsync = ref.watch(articleFutureProvider(url));
+    final articleAsync = ref.watch(articleContentProvider(url));
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reader'),
-        actions: [
-          // Only show save button if article is loaded
-          if (articleAsync.value != null)
-            IconButton(
-              icon: const Icon(Icons.save_alt),
-              onPressed: () async {
-                // Cast value to ParsedArticle
-                final article = articleAsync.value!;
-
-                final articleToSave = Article(
-                  url: url,
-                  title: article.title,
-                  content: article.content,
-                  imageUrl: article.imageUrl,
-                  savedAt: DateTime.now(),
-                );
-
-                final storage = ref.read(storageServiceProvider);
-                await storage.saveArticle(articleToSave);
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Article saved!')),
-                  );
-                }
-              },
-            ),
-        ],
-      ),
       body: articleAsync.when(
-        data: (Object? data) {
-          // Accept generalized type and cast
-          if (data is! ParsedArticle) return const SizedBox.shrink();
-          final article = data;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.p16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (article.imageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.r12),
-                    child: Image.network(
-                      article.imageUrl!,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const SizedBox.shrink(),
+        data: (article) {
+          return CustomScrollView(
+            slivers: [
+              // Collapsible AppBar with hero image
+              SliverAppBar(
+                expandedHeight: article.imageUrl != null ? 250 : 0,
+                pinned: true,
+                stretch: true,
+                backgroundColor: theme.scaffoldBackgroundColor,
+                foregroundColor: theme.colorScheme.onSurface,
+                flexibleSpace: article.imageUrl != null
+                    ? FlexibleSpaceBar(
+                        background: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              article.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  ColoredBox(
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                                    child: Icon(
+                                      Icons.image_not_supported_outlined,
+                                      size: 48,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                            ),
+                            // Gradient overlay for readability
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.7),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : null,
+                actions: [
+                  // Only show save button if not already cached
+                  if (!article.isCached)
+                    IconButton(
+                      icon: const Icon(Icons.bookmark_add_outlined),
+                      tooltip: 'Save Article',
+                      onPressed: () => _saveArticle(context, ref, article),
+                    )
+                  else
+                    // Show saved indicator
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Chip(
+                        avatar: Icon(
+                          Icons.offline_pin,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        label: const Text('Saved'),
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
+                ],
+              ),
+
+              // Article content
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.p20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        article.title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSizes.p16),
+
+                      // Divider
+                      Divider(color: theme.colorScheme.outline),
+
+                      const SizedBox(height: AppSizes.p16),
+
+                      // Article body
+                      HtmlWidget(
+                        article.content,
+                        textStyle: theme.textTheme.bodyLarge?.copyWith(
+                          height: 1.8,
+                          fontSize: 17,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
+                        customStylesBuilder: (element) {
+                          final textColor = isDark ? '#F9FAFB' : '#111827';
+                          final linkColor = isDark ? '#818CF8' : '#6366F1';
+
+                          // Force consistent colors on all container elements
+                          if (element.localName == 'div' ||
+                              element.localName == 'section' ||
+                              element.localName == 'article' ||
+                              element.localName == 'span' ||
+                              element.localName == 'figure' ||
+                              element.localName == 'figcaption') {
+                            return {
+                              'background-color': 'transparent',
+                              'color': textColor,
+                            };
+                          }
+
+                          // Style paragraphs
+                          if (element.localName == 'p') {
+                            return {
+                              'margin-bottom': '16px',
+                              'color': textColor,
+                              'background-color': 'transparent',
+                            };
+                          }
+
+                          // Style links
+                          if (element.localName == 'a') {
+                            return {
+                              'color': linkColor,
+                              'text-decoration': 'none',
+                            };
+                          }
+
+                          // Style images
+                          if (element.localName == 'img') {
+                            return {
+                              'border-radius': '12px',
+                              'margin': '16px 0',
+                            };
+                          }
+
+                          // Style headings
+                          if (element.localName == 'h1' ||
+                              element.localName == 'h2' ||
+                              element.localName == 'h3' ||
+                              element.localName == 'h4' ||
+                              element.localName == 'h5' ||
+                              element.localName == 'h6') {
+                            return {
+                              'font-weight': 'bold',
+                              'margin-top': '24px',
+                              'margin-bottom': '12px',
+                              'color': textColor,
+                            };
+                          }
+
+                          // Style blockquotes
+                          if (element.localName == 'blockquote') {
+                            return {
+                              'border-left': '4px solid $linkColor',
+                              'padding-left': '16px',
+                              'margin': '16px 0',
+                              'font-style': 'italic',
+                              'color': textColor,
+                            };
+                          }
+
+                          // Style lists
+                          if (element.localName == 'ul' ||
+                              element.localName == 'ol' ||
+                              element.localName == 'li') {
+                            return {
+                              'color': textColor,
+                            };
+                          }
+
+                          // Style strong/bold
+                          if (element.localName == 'strong' ||
+                              element.localName == 'b') {
+                            return {
+                              'font-weight': 'bold',
+                              'color': textColor,
+                            };
+                          }
+
+                          // Style italic
+                          if (element.localName == 'em' ||
+                              element.localName == 'i') {
+                            return {
+                              'font-style': 'italic',
+                              'color': textColor,
+                            };
+                          }
+
+                          return null;
+                        },
+                        onTapUrl: (tappedUrl) async {
+                          return true;
+                        },
+                      ),
+
+                      // Bottom padding for comfortable scrolling
+                      const SizedBox(height: AppSizes.p48),
+                    ],
                   ),
+                ),
+              ),
+            ],
+          );
+        },
+        loading: () => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: AppSizes.p16),
+              Text(
+                'Loading article...',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        error: (Object error, StackTrace stackTrace) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.p24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 64,
+                  color: theme.colorScheme.error,
+                ),
                 const SizedBox(height: AppSizes.p16),
                 Text(
-                  article.title,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  'Failed to load article',
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: AppSizes.p8),
-                const Divider(),
-                const SizedBox(height: AppSizes.p16),
-                HtmlWidget(
-                  article.content,
-                  textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    height: 1.6,
-                    fontSize: AppSizes.fontBody,
+                Text(
+                  error.toString(),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  onTapUrl: (url) async {
-                    return true;
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSizes.p24),
+                FilledButton.icon(
+                  onPressed: () {
+                    // Refresh the provider
+                    ref.invalidate(articleContentProvider(url));
                   },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
                 ),
               ],
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object error, StackTrace stackTrace) =>
-            Center(child: Text('Error: $error')),
+          ),
+        ),
       ),
     );
+  }
+
+  Future<void> _saveArticle(
+    BuildContext context,
+    WidgetRef ref,
+    ArticleContent article,
+  ) async {
+    final articleToSave = Article(
+      url: url,
+      title: article.title,
+      content: article.content,
+      imageUrl: article.imageUrl,
+      savedAt: DateTime.now(),
+    );
+
+    final storage = ref.read(storageServiceProvider);
+    await storage.saveArticle(articleToSave);
+
+    // Refresh both providers to update UI
+    ref
+      ..invalidate(articleContentProvider(url))
+      ..invalidate(savedArticlesProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: AppColors.success),
+              SizedBox(width: AppSizes.p12),
+              Text('Article saved to library'),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }

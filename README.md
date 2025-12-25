@@ -1,14 +1,34 @@
 # Offline Article Reader
 
-A Flutter application for saving and reading articles offline.
+A Flutter application for saving and reading articles offline with a clean, distraction-free experience.
 
 ## Features
 
-- 📥 Save articles from any URL for offline reading
-- 📚 Library view to manage saved articles
-- 📖 Clean, distraction-free reader experience
-- 🌙 Dark mode support
-- 💾 Local SQLite storage
+### Core
+- 📥 **Save Articles** — Paste any URL to save articles for offline reading
+- 📚 **Library** — Manage saved articles with hero images and gradient cards
+- 📖 **Reader** — Clean, distraction-free reading with collapsible hero images
+- 🔄 **Offline-First** — Saved articles load from cache, no internet required
+
+### Reading Experience
+- 🧹 **Smart Parser** — Removes ads, navigation, social buttons, and junk content
+- 🎨 **Consistent Styling** — Forces readable text colors regardless of source site
+- 📝 **Title Deduplication** — No duplicate titles in article content
+
+### Customization
+- 🎨 **Theme Switching** — System, Light, or Dark mode with persistence
+- ⚙️ **Settings** — Theme, about page, licenses, clear data
+- 🌙 **AMOLED Dark Mode** — Pure black background for OLED screens
+
+### Onboarding
+- 📱 **First-Launch Tutorial** — Animated 4-page onboarding experience
+- 💡 **Feature Highlights** — Learn key features before starting
+
+## Screenshots
+
+| Library | Reader | Settings |
+|---------|--------|----------|
+| Article cards with hero images | Distraction-free reading | Theme selection |
 
 ## Getting Started
 
@@ -40,26 +60,42 @@ A Flutter application for saving and reading articles offline.
 ```
 lib/
 ├── core/
-│   ├── constants/      # App-wide constants (colors, sizes, strings)
-│   └── theme/          # App themes
+│   ├── constants/      # Colors, sizes, strings
+│   ├── providers/      # Theme provider
+│   └── theme/          # Material 3 themes
 ├── features/
-│   ├── library/        # Article library feature
-│   │   ├── models/     # Article model
-│   │   ├── screens/    # Library screen
-│   │   └── services/   # Storage service
-│   └── reader/         # Article reader feature
-│       ├── screens/    # Reader & URL input screens
-│       └── services/   # Article parser service
-├── router/             # App routing (go_router)
+│   ├── library/        # Article library
+│   ├── onboarding/     # First-launch tutorial
+│   ├── reader/         # Article reader & parser
+│   └── settings/       # Settings & about screens
+├── router/             # Routes & navigation
 └── main.dart           # App entry point
 ```
 
 ## Tech Stack
 
-- **State Management**: Riverpod
-- **Routing**: go_router
-- **Database**: sqflite
-- **Article Parsing**: html package
+| Category | Technology |
+|----------|------------|
+| UI | Flutter, Material 3 |
+| State | Riverpod |
+| Routing | go_router |
+| Database | sqflite |
+| Article Parsing | html, http |
+| HTML Rendering | flutter_widget_from_html |
+
+## Key Features Detail
+
+### Article Parser
+The parser removes 100+ types of unwanted elements:
+- Ads, iframes, social widgets
+- Navigation, sidebars, footers
+- Affiliate disclaimers, CTAs
+- Related articles, comments
+- Inline styles (forces consistent theming)
+
+### Offline-First Architecture
+1. **New URL** → Fetch from internet → Display → Optional save
+2. **Saved Article** → Load instantly from SQLite → No network needed
 
 ## License
 

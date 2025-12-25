@@ -60,6 +60,9 @@ class StorageService {
   Future<int> saveArticle(Article article) async {
     final db = await database;
 
+    // Create map without id (id is auto-generated)
+    final data = article.toMap()..remove('id');
+
     // Check if exists
     final existing = await db.query(
       'articles',
@@ -71,13 +74,13 @@ class StorageService {
       // Update
       return db.update(
         'articles',
-        article.toMap(),
+        data,
         where: 'url = ?',
         whereArgs: [article.url],
       );
     } else {
       // Insert
-      return db.insert('articles', article.toMap());
+      return db.insert('articles', data);
     }
   }
 
@@ -112,5 +115,25 @@ class StorageService {
       return Article.fromMap(maps.first);
     }
     return null;
+  }
+
+  /// Get article by URL (for cached reading)
+  Future<Article?> getArticleByUrl(String url) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'articles',
+      where: 'url = ?',
+      whereArgs: [url],
+    );
+    if (maps.isNotEmpty) {
+      return Article.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  /// Delete all articles from the database
+  Future<int> clearAllArticles() async {
+    final db = await database;
+    return db.delete('articles');
   }
 }

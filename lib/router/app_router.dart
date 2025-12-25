@@ -5,22 +5,31 @@ import 'package:offline_article_reader/app_imports.dart';
 
 // Router Provider
 final routerProvider = Provider<GoRouter>((ref) {
+  final isOnboardingComplete = ref.watch(onboardingCompleteProvider);
+
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: isOnboardingComplete
+        ? AppRoutes.homePath
+        : AppRoutes.onboardingPath,
     routes: [
       GoRoute(
-        path: '/',
-        name: 'home',
+        path: AppRoutes.onboardingPath,
+        name: AppRoutes.onboardingName,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.homePath,
+        name: AppRoutes.homeName,
         builder: (context, state) => const LibraryScreen(),
         routes: [
           GoRoute(
-            path: 'add',
-            name: 'add_article',
+            path: AppRoutes.addArticleRelative,
+            name: AppRoutes.addArticleName,
             builder: (context, state) => const UrlInputScreen(),
           ),
           GoRoute(
-            path: 'read',
-            name: 'reader',
+            path: AppRoutes.readerRelative,
+            name: AppRoutes.readerName,
             builder: (context, state) {
               final url = state.uri.queryParameters['url'];
               if (url == null) {
@@ -30,6 +39,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               }
               return ReaderScreen(url: url);
             },
+          ),
+          GoRoute(
+            path: AppRoutes.settingsRelative,
+            name: AppRoutes.settingsName,
+            builder: (context, state) => const SettingsScreen(),
           ),
         ],
       ),
