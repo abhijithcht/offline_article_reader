@@ -1,0 +1,48 @@
+name: offline_article_reader
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Assets
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.3.3
+  flutter_animate: ^4.5.2
+  flutter_widget_from_html: ^0.17.1
+
+  # Architecture & State Management
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^3.0.3
+  go_router: ^17.0.1
+
+  # Database
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.5
+
+  # Networking & Parsing
+  http: ^1.6.0
+  html: ^0.15.6
+  intl: ^0.20.2
+
+  riverpod: any
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  # Linter
+  very_good_analysis: ^10.0.0
+  
+  # Code Generation (Disabled/Removed for now)
+  # build_runner: ^2.4.9
+
+
+
+flutter:
+  uses-material-design: true
