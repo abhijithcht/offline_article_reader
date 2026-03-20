@@ -135,7 +135,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object err, _) => Center(
+        error: (err, _) => Center(
           child: Text('Error loading history: $err'),
         ),
       ),

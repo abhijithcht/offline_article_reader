@@ -26,7 +26,7 @@ class FoldersViewModel extends AsyncNotifier<List<Folder>> {
   Future<void> renameFolder(int id, String newName) async {
     final storage = ref.read(storageServiceProvider);
     final currentList = state.value;
-    final folder = currentList?.firstWhere((Folder f) => f.id == id);
+    final folder = currentList?.firstWhere((f) => f.id == id);
 
     if (folder != null) {
       final updated = folder.copyWith(name: newName);

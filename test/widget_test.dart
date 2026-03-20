@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('App starts and shows LibraryScreen (or empty state)', (
-    WidgetTester tester,
+    tester,
   ) async {
     // Mock SharedPreferences
     SharedPreferences.setMockInitialValues({});

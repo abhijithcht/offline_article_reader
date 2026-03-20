@@ -256,7 +256,7 @@ class ReaderScreen extends ConsumerWidget {
             ],
           ),
         ),
-        error: (Object error, StackTrace stackTrace) => Center(
+        error: (error, stackTrace) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSizes.p24),
             child: Column(
